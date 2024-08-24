@@ -194,8 +194,7 @@ static void __attribute__((constructor)) sanitise_environment(void)
     fprintf(stderr, "pid %d: executable %*s\n", pid, (int)r, link);
 #endif
 
-  int i;
-  for (i = 0; i < (sizeof(lc_vars) / sizeof(lc_vars[0])); ++i)
+  for (unsigned int i = 0; i < NUM_LC_VARS; ++i)
   {
     const char *current = getenv(lc_vars[i]);
     if (!current)

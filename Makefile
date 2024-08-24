@@ -1,7 +1,7 @@
 #! /usr/bin/make
 
 CFLAGS   = -O2 -g
-OPTFLAGS = -Wall -Wformat=2
+OPTFLAGS = -Wall -Wextra -Wformat=2
 LDFLAGS  = -ldl
 override LIBFLAGS = -shared -fPIC
 

@@ -8,16 +8,16 @@ struct result_t {
   bool value, ret, error;
 };
 
-struct {
+static struct {
   int value, ret, error, tests;
 } tally = {};
 
 static void test(const char *set, const char *Cv, int Cr, int Cerrno)
 {
   char *equals = strchr(set, '=');
-  int namelen = equals ? equals - set : strlen(set);
+  size_t namelen = equals ? (size_t)(equals - set) : strlen(set);
   char name[namelen];
-  sprintf(name, "%.*s", namelen, set);
+  sprintf(name, "%.*s", (int)namelen, set);
 
   errno = 0;
   int ret = putenv((char *)set);
