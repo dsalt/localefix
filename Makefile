@@ -57,7 +57,7 @@ bin/localefix: localefix.in
 	sed -e 's%{{PREFIX}}%'"$(PREFIX)"'%' >$@ <$<
 
 clean:
-	rm -f $(LIBRARIES) bin/localefix
+	rm -f $(LIBRARIES) bin/localefix test
 	rmdir -p --ignore-fail-on-non-empty $(dir $(LIBRARIES)) bin || :
 
 STR := $
@@ -72,10 +72,15 @@ install: all
 uninstall:
 	rm $(addprefix $(DESTDIR)$(PREFIX)/,$(LIBRARIES) bin/localefix)
 
-# Test:
-# gcc test.c -o test
-# LD_PRELOAD='${LIB}/localefix.so' _LC_BAD=en_US _LC_GOOD=en_GB.UTF-8 ./test
+# Testing
+
 # Defaults specified in case of environment
-# Returns non-zero on failure
+run-tests: test lib/$(ARCH)/localefix.so
+	LD_PRELOAD=lib/$(ARCH)/localefix.so _LC_BAD=en_US _LC_GOOD=en_GB.UTF-8 ./test
+
+# Test binary. Returns non-zero on failure
+test: test.c
+	$(CC) $(CFLAGS) $(OPTFLAGS) $< -o $@
+
 
 .DELETE_ON_ERROR:

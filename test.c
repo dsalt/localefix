@@ -47,7 +47,7 @@ int main(void)
   test("FOO=en_US.UTF-8", "en_US.UTF-8", 0, 0);
   test("=123", NULL, 0, 0);
   test("=en_US.UTF-8", NULL, 0, 0);
-  test("", NULL, 0, EINVAL);
+  test("", NULL, 0, EINVAL); // yes, putenv (glibc) does this
   test("ALONGNAMETOOLONGFORUS=foo", "foo", 0, 0);
 
   printf("Passes: v%d r%d e%d of %d\n", tally.value, tally.ret, tally.error, tally.tests);
