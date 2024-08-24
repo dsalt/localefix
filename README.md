@@ -63,7 +63,7 @@ The replacement locale enforces encoding (at present; this may change).
 Requirements:
 
 * `make` (usually GNU make)
-* A C99-conformant C compiler (usually gcc or clang)
+* A GNU99-conformant C compiler (usually gcc or clang)
 
 To compile, just run `make`.
 
