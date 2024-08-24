@@ -1,0 +1,30 @@
+#! /bin/sh
+if [ "$1" = '-h' ] || [ "$1" = '--help' ]; then
+  BINARY="$(basename "$0")"
+  cat <<EOF
+$BINARY: work around mangled language/locale environment variables
+
+This LD_PRELOAD library is intended for recalcitrant programs which limit
+you to a "blessed" set of languages which don't include yours, potentially
+causing problems with the likes of date formats.
+
+It alters the initial values of LANG, LANGUAGE, LC_* if needed.
+It intercepts setenv() to override considered-bad values.
+
+Syntax:
+  [ENVIRONMENT] $BINARY PROGRAM [ARGS...]
+
+Environment:
+  _LC_BAD  - target locale without encoding; default "en_US"
+  _LC_GOOD - replacement locale with optional encoding; default "en_GB.UTF-8"
+
+Matching of _LC_BAD ignores encodings: the default will match "en_US",
+"en_US.UTF-8", "en_US.ISO8859-15" etc.
+
+The replacement locale also enforces encoding (at present; this may change).
+EOF
+  exit 0
+fi
+
+export LD_PRELOAD='{{PREFIX}}/${LIB}/localefix.so'"${LD_PRELOAD:+:}$LD_PRELOAD"
+exec "$@"
