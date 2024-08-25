@@ -102,7 +102,6 @@ int setenv(const char *name, const char *value, int overwrite)
 
   if (LOOKUP_FUNCTION(setenv))
     return 1;
-  fprintf(stderr, "setenv %s = %s", name, value);
 
   int i;
   for (i = 0; i < NUM_LC_VARS; ++i)
@@ -129,7 +128,6 @@ int putenv(char *set)
 
   if (LOOKUP_FUNCTION(putenv))
     return 1;
-  fprintf(stderr, "putenv %s", set);
 
   const char *value = strchr(set, '=');
   if (!value)
