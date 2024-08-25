@@ -124,8 +124,6 @@ int setenv(const char *name, const char *value, int overwrite)
 
 int putenv(char *set)
 {
-  __localefix_init();
-
   if (LOOKUP_FUNCTION(putenv))
     return 1;
 
@@ -148,32 +146,12 @@ int putenv(char *set)
     return real_putenv(set); // name's longer than any we handle - pass
   }
 
+  // Maybe have something to replace at this point.
+  // Split out the name and pass to our setenv().
   char name[namelen];
   name[namelen - 1] = 0;
   strncpy(name, set, namelen - 1);
-
-  int i;
-  for (i = 0; i < NUM_LC_VARS; ++i)
-  {
-    if (strcmp(name, lc_vars[i]))
-      continue; // try next match
-
-    if (!strncmp(value, lc_bad, len_bad)
-        && (value[len_bad] == '.' || value[len_bad] == 0))
-    {
-      value = i ? lc_good : lc_language;
-      fputs(" [replaced]\n", stderr);
-      if (LOOKUP_FUNCTION(setenv))
-        return 1;
-      // Tail-call with data expected to be on the stack
-      // Let's play dangerously
-      return real_setenv(name, value, 1);
-    }
-  }
-
-  // not one of ours - pass
-  fputc('\n', stderr);
-  return real_putenv(set);
+  return setenv(name, value, 1);
 }
 
 static void __attribute__((constructor)) sanitise_environment(void)
