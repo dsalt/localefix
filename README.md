@@ -75,6 +75,8 @@ If building on i386 or amd64, this will build two copies of the library, one
 for each architecture. *You're probably going to want both.* You can
 override this behaviour with `make SINGLEARCH=1`.
 
+If you want to run tests, `make run-tests`.
+
 ## Installation
 
 Depends on where you're installing.

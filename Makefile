@@ -74,13 +74,12 @@ uninstall:
 
 # Testing
 
-# Defaults specified in case of environment
-run-tests: test lib/$(ARCH)/localefix.so
-	LD_PRELOAD=lib/$(ARCH)/localefix.so _LC_BAD=en_US _LC_GOOD=en_GB.UTF-8 ./test
+run-tests: test
+	./test
 
 # Test binary. Returns non-zero on failure
-test: test.c
-	$(CC) $(CFLAGS) $(OPTFLAGS) $< -o $@
+test: test.c localefix.c
+	$(CC) $(CFLAGS) $(OPTFLAGS) -DTESTMODE $^ -o $@
 
 
 .DELETE_ON_ERROR:

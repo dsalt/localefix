@@ -220,3 +220,11 @@ static void __attribute__((constructor)) sanitise_environment(void)
       setenv(lc_vars[i], i ? lc_good : lc_language, 1);
   }
 }
+
+#ifdef TESTMODE
+void __localefix_reread(void)
+{
+  len_bad = -1;
+  __localefix_init();
+}
+#endif
