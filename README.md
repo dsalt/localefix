@@ -39,24 +39,28 @@ defaults are what they are: it's what I need, and (so far as I know) it's
 
 ## Usage
 
-_[ENVIRONMENT]_ `localefix` _PROGRAM_ _[ARGS…]_
+<pre><i>[ENVIRONMENT]</i> localefix <i>PROGRAM [ARGS…]_</i></pre>
 
 ### Environment
 
 * `_LC_BAD` - target locale without encoding
-* `_LC_GOOD` - replacement locale (with encoding)
+* `_LC_GOOD` - replacement locale with optional encoding (use `*` as the
+  encoding to retain the original)
 
 #### Defaults
 
 ```sh
 _LC_BAD=en_US
-_LC_GOOD=en_GB.UTF-8
+_LC_GOOD=en_GB.*
 ```
+
+#### Matching
 
 Matching of `_LC_BAD` ignores encodings: the default will match `en_US`,
 `en_US.UTF-8`, `en_US.ISO8859-15` etc.
 
-The replacement locale enforces encoding (at present; this may change).
+`_LC_BAD`=`en_US` and `_LC_GOOD`=`en_GB.*` will keep whatever encoding was
+used for `en_US` (including none), e.g. `en_US.ISO8859-15` will give `en_GB.ISO8859-15`.
 
 ## Compilation
 

@@ -24,9 +24,9 @@
 #include <sys/param.h>
 #include <errno.h>
 #include <dlfcn.h>
+#include <stdio.h>
 
 #ifdef DEBUG
-#  include <stdio.h>
 #  include <unistd.h>
 #  include <limits.h>
 #else
@@ -41,7 +41,12 @@
 #define LC_GOOD "_LC_GOOD"
 #define LC_ENC "_LC_ENCODING"
 
-static const char lc_vars[][20] = {
+// Short, but longer than the longest in lc_vars[]
+#define MAX_ENV_NAME_LENGTH 20
+// Long enough for any locale name & encoding (& NUL terminator)
+#define MAX_LOCALE_LENGTH 64
+
+static const char lc_vars[][MAX_ENV_NAME_LENGTH] = {
   "LANGUAGE", // special: no locale
   "LANG",
   "LC_CTYPE",
@@ -60,27 +65,45 @@ static const char lc_vars[][20] = {
 };
 #define NUM_LC_VARS (*(&lc_vars + 1) - lc_vars)
 
+// Target & replacement locale names (may contain encodings)
 static const char *lc_bad = NULL, *lc_good = NULL;
-static int len_bad = -1;
-static char lc_language[256]; // reasonable length limit?
+// Replacement locale name (encoding stripped)
+static char lc_language[MAX_ENV_NAME_LENGTH];
+// Lengths of locale names (excluding encodings)
+static int len_bad = -1, len_good = -1;
+
+static int preserve_encoding;
+
 
 static int (*real_setenv)(const char *, const char *, int) = NULL;
-static int (*real_putenv)(char *) = NULL;
+ int (*real_putenv)(char *) = NULL;
+
+static inline int dotlen(const char *lc)
+{
+  const char *dot = strchr(lc, '.');
+  return dot ? dot - lc : (int)strlen(lc);
+}
 
 static void __localefix_init(void)
 {
   if (len_bad >= 0)
     return;
-  lc_bad  = getenv(LC_BAD)  ?: "en_US";
-  len_bad = strlen(lc_bad); // should be 5
-  lc_good = getenv(LC_GOOD) ?: "en_GB.UTF-8";
 
-  char *dot = strchr(lc_good, '.');
-  int len = sizeof(lc_language) - 1;
-  if (dot)
-    len = MIN(len, dot - lc_good);
+  lc_bad  = getenv(LC_BAD)  ?: "en_US";
+  len_bad = dotlen(lc_bad); // should be 5
+
+  lc_good = getenv(LC_GOOD) ?: "en_GB.*";
+  int len = dotlen(lc_good); // should be 5
+
+  // if _LC_GOOD ends in ".*", preserve the target encoding
+  preserve_encoding = lc_good[len] && lc_good[len + 1] == '*';
+
+  // make a copy of the locale (without encoding); note fixed-size buffer
+  len = MIN(MAX_ENV_NAME_LENGTH - 1, len);
   strncpy(lc_language, lc_good, len);
   lc_language[len] = 0;
+
+  len_good = len;
 }
 
 static int lookup_function(void **fn, const char *name)
@@ -103,6 +126,9 @@ int setenv(const char *name, const char *value, int overwrite)
   if (LOOKUP_FUNCTION(setenv))
     return 1;
 
+  if (len_bad == 0 || len_good == 0)
+    return real_setenv(name, value, overwrite);
+
   int i;
   for (i = 0; i < NUM_LC_VARS; ++i)
   {
@@ -112,7 +138,20 @@ int setenv(const char *name, const char *value, int overwrite)
     if (!strncmp(value, lc_bad, len_bad)
         && (value[len_bad] == '.' || value[len_bad] == 0))
     {
-      value = i ? lc_good : lc_language;
+      if (i && preserve_encoding)
+      {
+        char *dot = strchr(value, '.');
+        // malloc & free?
+        int len = len_good + (dot ? strlen(dot) : 0) + 1;
+        if (len <= MAX_LOCALE_LENGTH)
+        {
+          char *replacement = alloca(len);
+          value = replacement;
+          sprintf(replacement, "%s%s", lc_language, dot ?: "");
+        }
+      }
+      else
+        value = i ? lc_good : lc_language;
       fputs(" [replaced]", stderr);
       break;
     }
@@ -140,7 +179,7 @@ int putenv(char *set)
   }
 
   size_t namelen = ++value - set; // includes NUL/=; value now points past =
-  if (namelen >= sizeof(lc_vars[0]))
+  if (namelen == 1 || namelen > MAX_ENV_NAME_LENGTH)
   {
     fputs(" [pass]\n", stderr);
     return real_putenv(set); // name's longer than any we handle - pass
